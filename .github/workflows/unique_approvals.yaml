@@ -1,0 +1,66 @@
+name: unique-pr-approvals
+on: 
+  pull_request:
+
+jobs:
+  check-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Previous Review
+        id: get-prev-review
+        run: |
+          pr_number=$(echo "${{ github.event.pull_request.url }}" | awk -F'/' '{print $NF}')
+          reviews=$(curl -s -X GET \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/${pr_number}/reviews")
+
+          reviewed='true' 
+          # TODO! check if the reviews are empty
+
+          if [ ${reviewed} == 'true' ]; then
+            last_review=$(echo "${reviews}" | jq -r 'map(select(.state == "APPROVED")) | last')
+            last_reviewer_grp=$(echo "${last_reviewer_grp}" | jq -r '.author_association')
+
+            echo "::set-output name=grp::${last_reviewer_grp}"
+
+          else
+            echo "::set-output name=grp::''"
+          fi
+
+      - name: Check if the current review is valid
+        id: valid-curr-review 
+        run: |
+          prev_grp="${{ steps.get-prev-review.outputs.grp }}" 
+
+          if [ -n ${prev_grp} ]; then
+            current_grp=$(curl -s -X GET \
+              -H "Accept: application/vnd.github.v3+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/users/${{ github.actor }}/repos" | jq -r '.[].owner.type')
+
+            # two users with the same group have reviewed the PR
+            if [ ${current_grp} != ${prev_grp} ]; then
+              echo "::set-output name=res::'VALID'"
+
+            else
+              echo "::set-output name=res::'INVALID'"
+            fi
+            
+          else
+            echo "::set-output name=res::'VALID'"
+          fi
+
+      
+      - name: Accept PR
+        if: ${{ steps.valid-curr-review.outputs.res == 'VALID' }}
+        run: |
+          # TODO! proper action - current one is merge, review might be needed
+          :'
+          pr_number=$(echo "${{ github.event.pull_request.url }}" | awk -F'/' '{print $NF}')
+          curl -s -X PUT \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/${pr_number}/merge"
+          '
+
