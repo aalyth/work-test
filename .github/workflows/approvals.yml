@@ -1,5 +1,9 @@
 name: pr-approvals 
-on: [pull_request]
+on: 
+  pull_request:
+    types: [opened]
+  pull_request_review:
+    types: [submitted]
 
 jobs:
   check-pr:
