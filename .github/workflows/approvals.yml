@@ -36,10 +36,11 @@ jobs:
             "state": "'${state}'",
           }'
           echo "Payload: $payload"
+          echo "GH ref: ${{ github.ref }}"
           
           curl -L \
             --request POST \
             --header "Accept: application/vnd.github+json" \
             --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
             --data   "${payload}" \
-            https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}
+            https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.ref }}
