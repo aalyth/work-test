@@ -38,7 +38,8 @@ jobs:
           done
 
           required_approvals=2
-          if [ $(echo "${approval_usrs}" | wc -l) -lt "$required_approvals" ]; then
-              echo Error: at least ${required_approvals} approvals needed to be able to merge this PR.
+          current_approvals=$(echo "${approval_usrs}" | wc -l)
+          if [  "$current_approvals" -lt "$required_approvals" ]; then
+              echo Error: at least ${required_approvals} approvals needed to be able to merge this PR (currently: $current_approvals).
               exit 1
           fi
