@@ -30,7 +30,7 @@ jobs:
             state='success'
           fi
 
-          echo "Status: $status"
+          echo "State: $state"
           payload='{
             "context": "approvals",
             "state": "'${state}'",
