@@ -43,7 +43,7 @@ jobs:
           
           required_approvals=2
           if [ "$approval_usrs" = '' ]; then
-            echo "Error: at least ${required_approvals} approvals needed to be able to merge this PR (currently: 0)."
+            echo "Error: at least ${required_approvals} unique approvals needed to be able to merge this PR (currently: 0)."
             exit 1
           fi
           
