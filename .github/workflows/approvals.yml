@@ -17,6 +17,7 @@ jobs:
       - name: Check Approvals
         id: check-approvals
         run: |
+          find .
           python script.py approvals_config.yaml
         
           if [ $? -ne 0 ]; then
