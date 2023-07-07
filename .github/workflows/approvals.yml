@@ -1,9 +1,14 @@
 name: approvals
 on: 
+  # might be removed later
   pull_request:
     types: [opened]
+
   pull_request_review:
-    types: [submitted]
+    types: 
+      - submitted
+      - edited
+      - dismissed
 
 jobs:
   check-approvals:
@@ -19,23 +24,22 @@ jobs:
         run: |
           res=$(python approvals.py approvals_config.yaml)
 
-          status='pending'
+          state='pending'
         
           if [ "${res}" = '0' ]; then
-            stauts='success'
+            state='success'
           fi
 
           echo "Status: $status"
           payload='{
-            "name": '"'approvals'"',
-            "head_sha": '"'$(git rev-parse HEAD)'"',
-            "status": '"'${status}'"'
+            "context": "approvals",
+            "state": "'${state}'",
           }'
           echo "Payload: $payload"
           
           curl -L \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
-            -d  "${payload}" \
-            https://api.github.com/repos/${{ github.repository }}/check-runs
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
+            --data   "${payload}" \
+            https://api.github.com/repos/${{ github.repository }}/$( git rev-parse HEAD )
