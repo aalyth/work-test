@@ -8,12 +8,12 @@ jobs:
       - name: Check Approvals 
         id: check-approvals
         run: |
-          pr_number=$(echo "${ github.event.pull_request.url }" | awk -F'/' '{print $NF}')
+          pr_number=$(echo "${{ github.event.pull_request.url }}" | awk -F'/' '{print $NF}')
 
           reviews=$(curl -s -X GET \
             -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: Bearer ${ secrets.GITHUB_TOKEN }" \
-            "https://api.github.com/repos/${ github.repository }/pulls/${ pr_number }/reviews")
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/${ pr_number }/reviews")
 
           # approval_grps=''
           approval_usrs=''
