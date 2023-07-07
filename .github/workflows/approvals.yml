@@ -37,8 +37,6 @@ jobs:
               fi
           done
 
-          echo "${approval_usrs}"
-
           required_approvals=2
           if [ $(echo "${approval_usrs}" | wc -l) -lt "$required_approvals" ]; then
               exit 1
