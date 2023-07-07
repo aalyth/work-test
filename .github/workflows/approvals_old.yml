@@ -1,0 +1,54 @@
+name: pr-approvals 
+on: 
+  pull_request:
+    types: [opened]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  check-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Approvals 
+        id: check-approvals
+        run: |
+          pr_number=$(echo "${{ github.event.pull_request.url }}" | awk -F'/' '{print $NF}')
+
+          reviews=$(curl -s -X GET \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/${pr_number}/reviews")
+
+          # approval_grps=''
+          approval_usrs=''
+
+          for review in $(echo "${reviews}" | jq -c '.[]' | tr -d ' ' ); do
+              # if the current review is APPROVED
+              if [ $(echo "${review}" | jq -r '.state') = 'APPROVED' ]; then
+                  # grp=$(echo "$review" | jq -r '.author_association')
+                  usr=$(echo "$review" | jq -r '.user.login')
+
+                  # if the review author's group is unique
+                  if ! $(echo "${approval_usrs}" | grep -q "${usr}") ; then
+                      # this check is so that the variable doesn't start with "\n"
+                      if [ "${approval_usrs}" = '' ]; then
+                          approval_usrs="${usr}"
+
+                      else
+                          approval_usrs="${approval_usrs}\n${usr}"
+                      fi
+                  fi
+              fi
+          done
+          
+          required_approvals=2
+          if [ "$approval_usrs" = '' ]; then
+            echo "Error: at least ${required_approvals} unique approvals needed to be able to merge this PR (currently: 0)."
+            exit 1
+          fi
+          
+          current_approvals=$(echo "${approval_usrs}" | wc -l)
+          if [  "$current_approvals" -lt "$required_approvals" ]; then
+              echo "Error: at least ${required_approvals} approvals needed to be able to merge this PR (currently: $current_approvals)."
+              exit 1
+          fi
