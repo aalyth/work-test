@@ -1,0 +1,41 @@
+name: pr-approvals 
+on: [pull_request]
+
+jobs:
+  check-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Approvals 
+        id: check-approvals
+        run: |
+          pr_number=$(echo "${ github.event.pull_request.url }" | awk -F'/' '{print $NF}')
+
+          reviews=$(curl -s -X GET \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${ secrets.GITHUB_TOKEN }" \
+            "https://api.github.com/repos/${ github.repository }/pulls/${ pr_number }/reviews")
+
+          approved_grps=''
+
+          for review in $(echo "${reviews}" | jq -c '.[]' | tr -d ' ' ); do
+              # if the current review is APPROVED
+              if [ $(echo "${review}" | jq '.state') = '"APPROVED"' ]; then
+                  grp=$(echo "$review" | jq '.author_association')
+
+                  # if the review author's group is unique
+                  if ! $(echo "${approved_grps}" | grep -q "${grp}") ; then
+                      # this check is so that the variable doesn't start with "\n"
+                      if [ "${approved_grps}" = '' ]; then
+                          approved_grps="${grp}"
+
+                      else
+                          approved_grps="${approved_grps}\n${grp}"
+                      fi
+                  fi
+              fi
+          done
+
+          required_approvals=2
+          if [ $(echo "${approved_grps}" | wc -l) -lt "$required_approvals" ]; then
+              exit 1
+          fi
