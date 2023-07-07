@@ -19,7 +19,7 @@ jobs:
         run: |
           res=$(python approvals.py approvals_config.yaml)
 
-          status='in_progress'
+          status='pending'
         
           if [ "${res}" = '0' ]; then
             stauts='success'
