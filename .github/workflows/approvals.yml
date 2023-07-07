@@ -17,7 +17,7 @@ jobs:
       - name: Check Approvals
         id: check-approvals
         run: |
-          python .github/script.py .github/approvals_config.yaml
+          python script.py approvals_config.yaml
         
           if [ $? -ne 0 ]; then
             curl -L \
