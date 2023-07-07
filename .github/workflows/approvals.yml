@@ -26,7 +26,7 @@ jobs:
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
               -d '{"title":"test123 check","status":"in_progress"}' \
-              https://api.github.com/repos/${{ github.repository }}/check-runs/${{ github.run_id }}
+              https://api.github.com/repos/${{ github.repository }}/check-runs
 
           else 
             echo Success
@@ -35,5 +35,5 @@ jobs:
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
               -d '{"title":"test123 check","status":"success"}' \
-              https://api.github.com/repos/${{ github.repository }}/check-runs/${{ github.run_id }}
+              https://api.github.com/repos/${{ github.repository }}/check-runs
           fi
