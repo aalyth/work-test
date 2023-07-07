@@ -42,4 +42,4 @@ jobs:
             --header "Accept: application/vnd.github+json" \
             --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
             --data   "${payload}" \
-            https://api.github.com/repos/${{ github.repository }}/statuses/$( git rev-parse HEAD )
+            https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}
