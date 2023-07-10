@@ -46,7 +46,7 @@ jobs:
       - name: result
         id: approvals-result
         run: |
-          payload=${ needs.check-approvals.outputs.payload }
+          payload=${{ needs.check-approvals.outputs.payload }}
           echo "Payload: $payload"
 
           curl -L \
