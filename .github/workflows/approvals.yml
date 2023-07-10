@@ -32,6 +32,7 @@ jobs:
 
           echo "State: $state"
           commit_sha=$(git rev-parse --short "$GITHUB_SHA")
+          echo "Commit sha: $commit_sha"
 
           curl -L \
             --request POST \
