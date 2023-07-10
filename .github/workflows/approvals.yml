@@ -30,8 +30,8 @@ jobs:
             state='success'
           fi
 
-          echo "state=$state" >> $GITHUB_OUTPUT
-
+          #echo "state=$state" >> $GITHUB_OUTPUT
+          echo "::set-output name=state::${state}"
 
   result:
     runs-on: ubuntu-latest
