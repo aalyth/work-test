@@ -30,11 +30,16 @@ jobs:
             state='success'
           fi
 
-          echo "State: $state"
+          payload="{
+            \"state\": \"${state}\",
+            \"description\": \"test status\",
+            \"context\": \"test123-ctx\"
+          }"
+          echo "Payload: $payload"
 
           curl -L \
             --request POST \
-            --header "Accept: application/vnd.github+json" \
+            --header "Accept: application/vnd.github.v3+json" \
             --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
-            --data   "{\"state\":\"${state}\", \"context\":\"test-ctx\"}" \
-            https://api.github.com/repos/${{ github.repository }}/statuses/${GITHUB_SHA}
+            --data   "$payload" \
+            https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}
