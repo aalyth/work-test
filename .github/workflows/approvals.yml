@@ -38,10 +38,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: approvals-check
     steps:
-      - env:
-          state: ${{ needs.approvals-check.outputs.state }}
       - name: result
         id: approvals-result
+        env:
+          state: ${{needs.approvals-check.outputs.state}}
         run: |
           echo "bachka???"
           payload="{\"state\": \"${state}\", \"context\": \"approvals-result\" }"
