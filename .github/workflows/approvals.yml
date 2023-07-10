@@ -19,18 +19,39 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Get Reviews 
+        id: get-reviews
+        run: |
+          pr_number=$(echo "${{ github.event.pull_request.number }}")
+
+          reviews=$(curl -s -X GET \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls/${pr_number}/reviews")
+
+          approved_reviews=$(echo "${reviews}" | jq -r 'map(select(.state == "APPROVED"))')
+
+          echo "${approved_reviews}" > reviews.json
+
       - name: Check Approvals
-        id: approvals-check
+        id: check-approvals
         run: |
           state='pending'
 
-          (python approvals.py approvals_config.yaml)
+          (python approvals.py config.yaml reviews.json)
         
           if [ $? -eq 0 ]; then
             state='success'
           fi
 
-          # echo "state=$state" >> $GITHUB_OUTPUT
+          rm reviews.json
+
+          echo "state=$state" >> $GITHUB_ENV
+
+      - name: Output Result
+        id: output-result
+        run: |
+          state=${{ env.state }}
 
           payload="{\"state\": \"${state}\", \"description\": \"it works\", \"context\": \"approvals-check\" }"
           
@@ -42,3 +63,4 @@ jobs:
             --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
             --data   "$payload" \
             https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}
+
