@@ -36,28 +36,32 @@ jobs:
       - name: Check Approvals
         id: check-approvals
         run: |
-          state='pending'
-          
           # so the python script doesn't terminate the action
           set +e
 
-          (python3 -m pip install pyyaml)
-          (python approvals.py config.yaml reviews.json)
+          python3 -m pip install pyyaml &> /dev/null
+          python approvals.py config.yaml reviews.json
+        
+          state='pending'
+          desc='Error: not approved enough - look in the action for more info.'
         
           if [ $? -eq 0 ]; then
             state='success'
+            desc='Success: approved enough.'
           fi
 
           rm reviews.json
 
           echo "state=$state" >> $GITHUB_ENV
+          echo "desc=$desc" >> $GITHUB_ENV
 
       - name: Output Result
         id: output-result
         run: |
           state=${{ env.state }}
+          desc=${{ env.desc }}
 
-          payload="{\"state\": \"${state}\", \"description\": \"it works\", \"context\": \"approvals-check\" }"
+          payload="{\"state\": \"${state}\", \"description\": \"${desc}\", \"context\": \"approvals-check\" }"
           
           echo "Payload: $payload"
 
