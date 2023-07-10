@@ -38,6 +38,7 @@ jobs:
         run: |
           state='pending'
 
+          (pip install -r requirements.txt)
           (python approvals.py config.yaml reviews.json)
         
           if [ $? -eq 0 ]; then
