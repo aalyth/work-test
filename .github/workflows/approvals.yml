@@ -37,6 +37,9 @@ jobs:
         id: check-approvals
         run: |
           state='pending'
+          
+          # so the python script doesn't terminate the action
+          set +e
 
           (python3 -m pip install pyyaml)
           (python approvals.py config.yaml reviews.json)
