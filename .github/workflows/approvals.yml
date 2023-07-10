@@ -63,14 +63,22 @@ jobs:
           state="${{ env.state }}"
           desc="${{ env.desc }}"
 
-          payload="{\"state\": \"${state}\", \"description\": \"${desc}\", \"context\": \"approvals-result\" }"
+          payload="{\"state\": \"${state}\", \"description\": \"${desc}\", \"context\": \"approvals\" }"
           
           echo "Payload: $payload"
+          
+          if [ ! -z "${{ inputs.github-status-commit }}" ]; then
+            GITHUB_STATUS_COMMIT=${{ inputs.github-status-commit }}
+          elif [ ! -z "${{ github.event.pull_request.head.sha }}" ]; then
+            GITHUB_STATUS_COMMIT=${{ github.event.pull_request.head.sha }}
+          else
+            GITHUB_STATUS_COMMIT=${{ github.sha }}
+          fi
 
           curl -L \
             --request POST \
             --header "Accept: application/vnd.github.v3+json" \
             --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
             --data   "$payload" \
-            https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}
+            https://api.github.com/repos/${{ github.repository }}/statuses/${GITHUB_STATUS_COMMIT}
 
