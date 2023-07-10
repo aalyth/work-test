@@ -43,7 +43,7 @@ jobs:
         env:
           state: ${{needs.approvals-check.outputs.state}}
         run: |
-          payload="{\"state\": \"${state}\", \"description\": \"it works\", \"context\": \"approvals-result\" }"
+          payload="{\"state\": \"${state}\", \"description\": \"it works\"}"
           
           echo "Payload: $payload"
 
