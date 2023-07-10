@@ -33,7 +33,7 @@ jobs:
           payload="{
             \"state\": \"${state}\",
             \"description\": \"test status\",
-            \"context\": \"test123-ctx\"
+            \"context\": \"approvals\"
           }"
           echo "Payload: $payload"
 
