@@ -30,10 +30,7 @@ jobs:
             state='success'
           fi
 
-          payload="{\"state\": \"${state}\", \"description\": \"test status\", \"context\": \"approvals-result\" }"
-          echo "Payload: $payload"
-
-          echo "payload=$payload" >> $GITHUB_OUTPUT
+          echo "state=$state" >> $GITHUB_OUTPUT
 
 
   approvals-result:
@@ -43,7 +40,8 @@ jobs:
       - name: result
         id: approvals-result
         run: |
-          payload=${{ needs.check-approvals.outputs.payload }}
+          state=${{ needs.check-approvals.outputs.state }}
+          payload="{\"state\": \"${state}\", \"description\": \"test status\", \"context\": \"approvals-result\" }"
 
           curl -L \
             --request POST \
