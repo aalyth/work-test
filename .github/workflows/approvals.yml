@@ -31,10 +31,11 @@ jobs:
           fi
 
           echo "State: $state"
+          commit_sha=$(git rev-parse --short "$GITHUB_SHA")
 
           curl -L \
             --request POST \
             --header "Accept: application/vnd.github+json" \
             --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
             --data   "{\"state\":\"${state}\", \"context\":\"approvals\"}" \
-            https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}
+            https://api.github.com/repos/${{ github.repository }}/statuses/${commit_sha}
