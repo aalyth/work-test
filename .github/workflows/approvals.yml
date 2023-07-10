@@ -35,8 +35,9 @@ jobs:
             \"description\": \"test status\",
             \"context\": \"approvals-result\"
           }"
+          echo "Payload: $payload"
 
-          echo "::set-output name=payload::${payload}"
+          echo "payload=$payload" >> $GITHUB_OUTPUT
 
 
   approvals-result:
@@ -47,7 +48,6 @@ jobs:
         id: approvals-result
         run: |
           payload=${{ needs.check-approvals.outputs.payload }}
-          echo "Payload: $payload"
 
           curl -L \
             --request POST \
