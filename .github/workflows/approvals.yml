@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       state: ${{ steps.approvals-check.outputs.state }}
-      test: 123
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -41,11 +40,10 @@ jobs:
     steps:
       - env:
           state: ${{ needs.approvals-check.outputs.state }}
-          test: ${{ needs.approvals-check.outputs.test }}
       - name: result
         id: approvals-result
         run: |
-          echo "Test: $test"
+          echo "bachka???"
           payload="{\"state\": \"${state}\", \"context\": \"approvals-result\" }"
           
           echo "State: $state"
