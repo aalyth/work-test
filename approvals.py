@@ -1,4 +1,6 @@
 #!/usr/bin/env/python3
 
 if __name__ == "__main__":
-    print('1')
+    import sys
+
+    sys.exit(1)

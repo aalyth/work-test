@@ -13,8 +13,6 @@ on:
 jobs:
   approvals-check:
     runs-on: ubuntu-latest
-    outputs:
-      state: ${{ steps.approvals-check.outputs.state }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -24,26 +22,17 @@ jobs:
       - name: Check Approvals
         id: approvals-check
         run: |
-          res=$(python approvals.py approvals_config.yaml)
-
           state='pending'
+
+          (python approvals.py approvals_config.yaml)
         
-          if [ "${res}" = '0' ]; then
+          if [ $? -eq 0 ]; then
             state='success'
           fi
 
-          echo "state=$state" >> $GITHUB_OUTPUT
+          # echo "state=$state" >> $GITHUB_OUTPUT
 
-  approvals-result:
-    runs-on: ubuntu-latest
-    needs: approvals-check
-    steps:
-      - name: result
-        id: approvals-result
-        env:
-          state: ${{needs.approvals-check.outputs.state}}
-        run: |
-          payload="{\"state\": \"${state}\", \"description\": \"it works\", \"context\": \"approvals-result\" }"
+          payload="{\"state\": \"${state}\", \"description\": \"it works\", \"context\": \"approvals-check\" }"
           
           echo "Payload: $payload"
 
