@@ -11,7 +11,7 @@ on:
       - dismissed
 
 jobs:
-  check-approvals:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -33,15 +33,18 @@ jobs:
           echo "state=$state" >> $GITHUB_OUTPUT
 
 
-  approvals-result:
+  result:
     runs-on: ubuntu-latest
-    needs: check-approvals
+    needs: check
     steps:
       - name: result
         id: approvals-result
         run: |
-          state=${{ needs.check-approvals.outputs.state }}
-          payload="{\"state\": \"${state}\", \"description\": \"test status\", \"context\": \"approvals-result\" }"
+          state=${{ needs.check.outputs.state }}
+          payload="{\"state\": \"${state}\", \"context\": \"result\" }"
+          
+          echo "State: $state"
+          echo "Payload: $payload"
 
           curl -L \
             --request POST \
