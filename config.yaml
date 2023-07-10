@@ -1,0 +1,15 @@
+#groups:
+#  test-grp:
+#    required: 4
+#  test-grp2: 
+#    required: 5
+#
+#users:
+#  - test-usr
+#  - test-usr2
+
+groups:
+  OWNER: 2
+
+users:
+  - aalyth
