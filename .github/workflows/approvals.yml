@@ -30,11 +30,7 @@ jobs:
             state='success'
           fi
 
-          payload="{
-            \"state\": \"${state}\",
-            \"description\": \"test status\",
-            \"context\": \"approvals-result\"
-          }"
+          payload="{\"state\": \"${state}\", \"description\": \"test status\", \"context\": \"approvals-result\" }"
           echo "Payload: $payload"
 
           echo "payload=$payload" >> $GITHUB_OUTPUT
