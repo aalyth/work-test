@@ -58,8 +58,8 @@ jobs:
       - name: Output Result
         id: output-result
         run: |
-          state=${{ env.state }}
-          desc=${{ env.desc }}
+          state="${{ env.state }}"
+          desc="${{ env.desc }}"
 
           payload="{\"state\": \"${state}\", \"description\": \"${desc}\", \"context\": \"approvals-check\" }"
           
