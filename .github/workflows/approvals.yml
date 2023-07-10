@@ -30,8 +30,10 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/pulls/${pr_number}/reviews")
 
           approved_reviews=$(echo "${reviews}" | jq -r 'map(select(.state == "APPROVED"))')
-
+          
+          touch reviews.json
           echo "${approved_reviews}" > reviews.json
+          cat reviews.json
 
       - name: Check Approvals
         id: check-approvals
@@ -40,7 +42,7 @@ jobs:
           set +e
 
           python3 -m pip install pyyaml &> /dev/null
-          python approvals.py config.yaml reviews.json
+          (python approvals.py config.yaml reviews.json)
         
           state='pending'
           desc='Error: not approved enough - look in the action for more info.'
