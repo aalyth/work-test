@@ -63,7 +63,7 @@ jobs:
           state="${{ env.state }}"
           desc="${{ env.desc }}"
 
-          payload="{\"state\": \"${state}\", \"description\": \"${desc}\", \"context\": \"approvals-check\" }"
+          payload="{\"state\": \"${state}\", \"description\": \"${desc}\", \"context\": \"approvals-result\" }"
           
           echo "Payload: $payload"
 
