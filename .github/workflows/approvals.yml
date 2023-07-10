@@ -43,10 +43,8 @@ jobs:
         env:
           state: ${{needs.approvals-check.outputs.state}}
         run: |
-          echo "bachka???"
-          payload="{\"state\": \"${state}\", \"context\": \"approvals-result\" }"
+          payload="{\"state\": \"${state}\", \"description\": \"it works\", \"context\": \"approvals-result\" }"
           
-          echo "State: $state"
           echo "Payload: $payload"
 
           curl -L \
