@@ -1,0 +1,99 @@
+name: Approvals
+description: Checks if a PR is approved according to a config file.
+
+inputs:
+  config: 
+    description: A config yaml file 
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Get Reviews 
+      id: get-reviews
+      shell: sh
+      run: |
+        pr_number=$(echo "${{ github.event.pull_request.number }}")
+
+        reviews=$(curl -s -X GET \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/pulls/${pr_number}/reviews")
+
+        approved_reviews=$(echo "${reviews}" | jq -r 'map(select(.state == "APPROVED"))')
+        
+        touch reviews.json
+        echo "${approved_reviews}" > reviews.json
+        cat reviews.json
+
+    - uses: actions/checkout@v3
+      with:
+        repository: 'http://github.com/aalyth/work-test'
+        sparse-checkout-cone-mode: false
+        sparse-checkout: |
+          approvals.py
+
+    - uses: actions/checkout@v3
+      with:
+        sparse-checkout-cone-mode: false
+        sparse-checkout: |
+          ${{ inputs.config }}
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Check Approvals
+      id: check-approvals
+      shell: sh
+      run: |
+        state='pending'
+        desc='Error: not approved enough - look in the action for more info.'
+
+        # so the python script doesn't terminate the action
+        set +e
+
+        config="${{ inputs.config }}"
+
+        if [ -f "${config}" ]; then
+          python3 -m pip install pyyaml &> /dev/null
+          (python approvals.py  reviews.json)
+
+        else 
+          exit 1
+        fi
+      
+        if [ $? -eq 0 ]; then
+          state='success'
+          desc='Success: approved enough.'
+        fi
+
+        echo "state=$state" >> $GITHUB_ENV
+        echo "desc=$desc" >> $GITHUB_ENV
+
+    - name: Output Result
+      id: output-result
+      shell: sh
+      run: |
+        state="${{ env.state }}"
+        desc="${{ env.desc }}"
+
+        payload="{\"state\": \"${state}\", \"description\": \"${desc}\", \"context\": \"approvals-check\" }"
+        
+        echo "Payload: $payload"
+
+        if [ ! -z "${{ inputs.github-status-commit }}" ]; then
+          GITHUB_STATUS_COMMIT=${{ inputs.github-status-commit }}
+        elif [ ! -z "${{ github.event.pull_request.head.sha }}" ]; then
+          GITHUB_STATUS_COMMIT=${{ github.event.pull_request.head.sha }}
+        else
+          GITHUB_STATUS_COMMIT=${{ github.sha }}
+        fi
+
+        curl -L \
+          --request POST \
+          --header "Accept: application/vnd.github.v3+json" \
+          --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
+          --data   "$payload" \
+          https://api.github.com/repos/${{ github.repository }}/statuses/${GITHUB_STATUS_COMMIT}
+
