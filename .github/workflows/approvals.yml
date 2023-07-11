@@ -45,7 +45,7 @@ jobs:
           desc='Error: not approved enough - look in the action for more info.'
           
           python3 -m pip install -r requirements.txt &> /dev/null
-          (python approvals.py  config.yaml reviews.json "${{ secrets.GITHUB_TOKEN }}")
+          (python approvals.py  config.yaml reviews.json "${{ secrets.GH_TOKEN }}")
         
           if [ $? -eq 0 ]; then
             state='success'
