@@ -40,12 +40,12 @@ jobs:
         run: |
           # so the python script doesn't terminate the action
           set +e
-
-          python3 -m pip install pyyaml &> /dev/null
-          (python approvals.py config.yaml reviews.json)
-        
+          
           state='pending'
           desc='Error: not approved enough - look in the action for more info.'
+          
+          python3 -m pip install pyyaml &> /dev/null
+          (python approvals.py config.yaml reviews.json)
         
           if [ $? -eq 0 ]; then
             state='success'
@@ -63,14 +63,22 @@ jobs:
           state="${{ env.state }}"
           desc="${{ env.desc }}"
 
-          payload="{\"state\": \"${state}\", \"description\": \"${desc}\", \"context\": \"approvals-check\" }"
+          payload="{\"state\": \"${state}\", \"description\": \"${desc}\", \"context\": \"approvals\" }"
           
           echo "Payload: $payload"
+          
+          if [ ! -z "${{ inputs.github-status-commit }}" ]; then
+            GITHUB_STATUS_COMMIT=${{ inputs.github-status-commit }}
+          elif [ ! -z "${{ github.event.pull_request.head.sha }}" ]; then
+            GITHUB_STATUS_COMMIT=${{ github.event.pull_request.head.sha }}
+          else
+            GITHUB_STATUS_COMMIT=${{ github.sha }}
+          fi
 
           curl -L \
             --request POST \
             --header "Accept: application/vnd.github.v3+json" \
             --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}"\
             --data   "$payload" \
-            https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}
+            https://api.github.com/repos/${{ github.repository }}/statuses/${GITHUB_STATUS_COMMIT}
 

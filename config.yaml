@@ -9,7 +9,7 @@
 #  - test-usr2
 
 groups:
-  OWNER: 2
+  OWNER: 1
 
 users:
   - aalyth
