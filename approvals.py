@@ -1,35 +1,25 @@
 #!/usr/bin/env/python3
 
 import sys
+
 import yaml
 import json
+
+import requests
 
 # analogous to the C function
 def errx(exit_code: int, msg: str) -> None:
     sys.stderr.write(msg + '\n')
     sys.exit(exit_code)
 
-class Approvals:
-    groups: dict
-    users: list
 
-    def __init__(self, grps: dict, usrs: list) -> None:
-        if type(grps) is not dict:
-            raise TypeError
-
-        if type(usrs) is not list:
-            raise TypeError
-
-        self.groups = grps
-        self.users = usrs
-
-    def __repr__(self) -> str:
-        return f'Approvals: \n\tgroups: {self.groups} \n\tusers: {self.users} \n'
-
-
-# gets the yaml config in the format: {'groups': {}, 'users': []}
+# result: {
+#           'organization': str, 
+#           'teams': {'<team1>': int, '<team2>': int, ...}
+#           'users': ['<user1>', '<user2>', ...]
+#         }
 # terminates the script upon error
-def scrape_config() -> Approvals:
+def scrape_config() -> dict:
     config = None
     with open(sys.argv[1], 'r') as config_file:
         try:
@@ -42,18 +32,60 @@ def scrape_config() -> Approvals:
     if config is None:
         errx(1, 'Error: invalid yaml config file.')
 
-    if config['groups'] is None:
-        config['groups'] = {}
+    if type(config['organization']) is not str:
+        errx(1, 'Error: invalid organization')
 
-    if config['users'] is None:
+    if type(config['teams']) is not dict:
+        config['teams'] = {}
+
+    if type(config['users']) is not list :
         config['users'] = []
     
-    return Approvals(config['groups'], config['users'])
+    return { \
+            'organization': config['organization'], \
+            'teams': config['teams'], \
+            'users': config['users']  \
+           } 
 
-# gets the json reviews in the format: {'groups': {}, 'users': []}
-# terminates the script upon error
-def scrape_reviews() -> Approvals:
-    groups = {}
+
+# result: {
+#           '<team1>': {'<member1>': True, '<member2>': True, ...},
+#           '<team2>': {'<member1>': True, '<member2>': True, ...}
+#           ...
+#         }
+# we use dictionaries for the members so the lookup is O(1)
+def scrape_team_members(config: dict) -> dict:
+    headers = {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': f'Bearer {sys.argv[3]}',
+    }
+    org = config['organization']
+
+    result = {}
+
+    for team in config['teams'].keys():
+        url = f'https://api.github.com/orgs/{org}/teams/{team}/members'
+        
+        resp = requests.get(url, headers=headers)
+
+        if resp.status_code != 200:
+            errx(2, f'Error: could not get "{team}" team members.')
+
+        result[team] = {}
+        for member in resp.json():
+            result[team][member['login']] = True
+
+    return result
+
+
+# result: {
+#           'teams': {'<team1>': int, '<team2>': int, ...}
+#           'users': ['<user1>', '<user2>', ...]
+#         }
+def scrape_reviews(config: dict) -> dict:
+    team_members = scrape_team_members(config)
+    
+    teams = {}
     users_lookup = {} 
     users = []
 
@@ -65,55 +97,57 @@ def scrape_reviews() -> Approvals:
         except:
             errx(2, 'Error: could not parse json file.')
 
+    def team_increment(teams: dict, team: str) -> None:
+        if team not in teams:
+            teams[team] = 1
+        else:
+            teams[team] += 1
 
     # rev - review
     for rev in reviews:
         try:
-            grp = rev['author_association']
-            usr = rev['user']['login']
-
-        # this part shouldn't be reached
-        except:
+            user = rev['user']['login']
+        except: # this part shouldn't be reached
             errx(2, 'Error: unexpected error while parsing reviews json.')
 
-        if grp in groups and usr not in users_lookup:
-            groups[grp] += 1
-        else:
-            groups[grp] = 1
+        if user in users_lookup:
+            continue
 
-        if usr not in users_lookup:
-            users.append(usr)
-            users_lookup[usr] = 0
+        users.append(user)
+        users_lookup[user] = True 
+
+        for team, members in team_members.items():
+            if user in members:
+                team_increment(teams, team)
         
-    try:
-        return Approvals(groups, users)
-    except:
-        errx(2, 'Error: could not parse the reviews json.')
+    return { \
+            'teams': teams, \
+            'users': users  \
+           }
 
+# the inputs are according to the functions above
+def check_approvals(config: dict, reviews: dict) -> None:
+    # lookup for the reviews['users']
+    rev_usr_lookup = { x:True for x in reviews['users'] }
 
-def check_approvals(config: Approvals, reviews: Approvals) -> None:
-    # lookup for the users in the reviews
-    rev_usr_lookup = { x:0 for x in reviews.users }
+    for team, required in config['teams'].items():
+        if team not in reviews['teams']:
+            errx(3, f'Error: no reviews from the team "{team}".') 
 
-    for grp, required in config.groups.items():
-        if grp not in reviews.groups:
-            errx(3, f'Error: no reviews from the group "{grp}".') 
+        if reviews['teams'][team] < required:
+            errx(3, f'Error: not enough approvals from team "{team}" - {reviews["teams"][team]}/{required}.')
 
-        if reviews.groups[grp] < required:
-            errx(3, f'Error: not enough approvals from group "{grp}" - {reviews.groups[grp]}/{required}.')
-
-    for usr in config.users:
+    for usr in config['users']:
         if usr not in rev_usr_lookup:
             errx(3, f'Error: user "{usr}" has not approved.')
 
-
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print('Error: expected 2 arguments - a yaml config file and a json with the reviews.')
+    if len(sys.argv) != 4:
+        print('Error: expected 3 arguments: \n\t1- yaml config\n\t2- reviews json\n\t3- GitHub API token')
         sys.exit(1)
 
     config = scrape_config()
-    reviews = scrape_reviews()
+    reviews = scrape_reviews(config)
 
     check_approvals(config, reviews)
 

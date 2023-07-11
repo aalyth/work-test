@@ -44,8 +44,8 @@ jobs:
           state='pending'
           desc='Error: not approved enough - look in the action for more info.'
           
-          python3 -m pip install pyyaml &> /dev/null
-          (python approvals.py config.yaml reviews.json)
+          python3 -m pip install -r requirements.txt &> /dev/null
+          (python approvals.py  config.yaml reviews.json "${{ secrets.GITHUB_TOKEN }}")
         
           if [ $? -eq 0 ]; then
             state='success'

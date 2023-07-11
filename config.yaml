@@ -1,15 +1,19 @@
-#groups:
-#  test-grp:
-#    required: 4
-#  test-grp2: 
-#    required: 5
+#organization: abaltatech
+#
+#teams:
+#  devops: 1
+#  test-aproval: 1
 #
 #users:
-#  - test-usr
-#  - test-usr2
+#  - imarinov3
+#  - valentinvarbanov
 
-groups:
-  OWNER: 1
+organization: actions-test-123
+
+teams:
+  grp1: 1
+  grp2: 1
 
 users:
-  - aalyth
+  - imarinov3
+  - valentinvarbanov
