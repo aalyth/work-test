@@ -84,6 +84,7 @@ def scrape_team_members(config: dict) -> dict:
 #         }
 def scrape_reviews(config: dict) -> dict:
     team_members = scrape_team_members(config)
+    print(f'team members = {team_members}')
     
     teams = {}
     users_lookup = {} 
